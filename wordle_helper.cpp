@@ -1,4 +1,4 @@
-// #define INNER
+#define INNER
 
 #include <iostream>
 #include <cassert>
@@ -18,9 +18,10 @@ vector<string> solves;
 bool not_in[5][26] = {0};
 int exist[26] = {0};
 char correct[5] = {0};
+bool recommand = false;
 bool hardmode = false;
 bool verbose = false;
-int threshold = 40;
+int threshold = 46;
 
 void read_all_words()
 {
@@ -209,57 +210,53 @@ void get_recommend(bool hardmode = false)
         printf("Search in All Words\n");
         for (int i = 0; i < len; ++i)
         {
-            int len = solves.size();
-            for (int i = 0; i < len; ++i)
+            const string &str = all[i];
+            double E = 0;
+            int sim_status[5] = {0}, lock[5] = {0};
+            for (int j = 0; j < 5; ++j)
             {
-                const string &str = all[i];
-                double E = 0;
-                int sim_status[5] = {0}, lock[5] = {0};
-                for (int j = 0; j < 5; ++j)
+                if (correct[j] && str[j] == correct[j])
+                    lock[j] = 2;
+                else if (exist[str[j] - 'a'])
                 {
-                    if (correct[j] && str[j] == correct[j])
-                        lock[j] = 2;
-                    else if (exist[str[j] - 'a'])
-                    {
-                        int cnt = 0;
-                        for (int k = 0; k <= j; ++k)
-                            cnt += (str[k] == str[j]);
-                        if (cnt <= exist[str[j] - 'a'])
-                            lock[j] = 1;
-                    }
+                    int cnt = 0;
+                    for (int k = 0; k <= j; ++k)
+                        cnt += (str[k] == str[j]);
+                    if (cnt <= exist[str[j] - 'a'])
+                        lock[j] = 1;
                 }
-                for (int s1 = lock[0]; s1 < 3; ++s1)
+            }
+            for (int s1 = lock[0]; s1 < 3; ++s1)
+            {
+                sim_status[0] = s1;
+                for (int s2 = lock[1]; s2 < 3; ++s2)
                 {
-                    sim_status[0] = s1;
-                    for (int s2 = lock[1]; s2 < 3; ++s2)
+                    sim_status[1] = s2;
+                    for (int s3 = lock[2]; s3 < 3; ++s3)
                     {
-                        sim_status[1] = s2;
-                        for (int s3 = lock[2]; s3 < 3; ++s3)
+                        sim_status[2] = s3;
+                        for (int s4 = lock[3]; s4 < 3; ++s4)
                         {
-                            sim_status[2] = s3;
-                            for (int s4 = lock[3]; s4 < 3; ++s4)
+                            sim_status[3] = s4;
+                            for (int s5 = lock[4]; s5 < 3; ++s5)
                             {
-                                sim_status[3] = s4;
-                                for (int s5 = lock[4]; s5 < 3; ++s5)
-                                {
-                                    sim_status[4] = s5;
-                                    int info = get_all_solves(str, sim_status, true);
-                                    double p = info / (double)len;
-                                    if (p > 0)
-                                        E -= p * log2(p);
-                                }
+                                sim_status[4] = s5;
+                                int info = get_all_solves(str, sim_status, true);
+                                double p = info / (double)len;
+                                if (p > 0)
+                                    E -= p * log2(p);
                             }
                         }
                     }
                 }
-                if (verbose)
-                    out << str << " " << E << endl;
-                if (solves_set.find(str) == solves_set.end())
-                    E *= tanh(1 / log2(tsize));
-                if (E > max_info)
-                    max_info = E,
-                    max_index = i;
             }
+            if (verbose)
+                out << str << " " << E << endl;
+            if (solves_set.find(str) == solves_set.end())
+                E *= tanh(1 / log2(tsize));
+            if (E > max_info)
+                max_info = E,
+                max_index = i;
         }
     }
     if (max_index < 0)
@@ -271,10 +268,14 @@ int main(int argc, char *argv[])
 {
     printf("Wordle Helper\n");
     int ch;
-    while ((ch = getopt(argc, argv, "hvn:")) != -1)
+    while ((ch = getopt(argc, argv, "rhvn:")) != -1)
     {
         switch (ch)
         {
+        case 'r':
+            printf("Recommand On\n");
+            recommand = true;
+            break;
         case 'h':
             printf("Hard Mode On\n");
             hardmode = true;
@@ -299,10 +300,13 @@ int main(int argc, char *argv[])
     for (int i = 1; i <= 6; ++i)
     {
         printf("Try %d\n", i);
-        if (solves.size() < threshold)
-            get_recommend(hardmode);
-        else if (i != 1)
-            get_recommend(true);
+        if (recommand)
+        {
+            if (solves.size() < threshold)
+                get_recommend(hardmode);
+            else
+                get_recommend(true);
+        }
         if (get_input(word, status))
         {
             printf("Congratulations!\n");
