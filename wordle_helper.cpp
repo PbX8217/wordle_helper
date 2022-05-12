@@ -198,7 +198,7 @@ void get_recommend()
     ofstream out;
     if (verbose)
     {
-        out.open(path_prefix + "wordle_solves_verbose.txt", ios::out | ios::trunc);
+        out.open(path_prefix + "wordle_predict.txt", ios::out | ios::trunc);
         assert(out.is_open());
     }
     double max_info = 0;
@@ -262,7 +262,7 @@ void get_recommend_hard()
     ofstream out;
     if (verbose)
     {
-        out.open(path_prefix + "wordle_solves_verbose.txt", ios::out | ios::trunc);
+        out.open(path_prefix + "wordle_predict.txt", ios::out | ios::trunc);
         assert(out.is_open());
     }
     double max_info = 0;
