@@ -326,15 +326,10 @@ int main(int argc, char *argv[])
     system("cls");
     printf("Wordle Helper\n");
     int ch;
-    bool all_recommend = false;
-    while ((ch = getopt(argc, argv, "frhvn:")) != -1)
+    while ((ch = getopt(argc, argv, "rhvn:")) != -1)
     {
         switch (ch)
         {
-        case 'f':
-            printf("Provide Initial Recommend\n");
-            all_recommend = true;
-            break;
         case 'r':
             printf("Recommend Off\n");
             recommend = false;
@@ -365,10 +360,12 @@ int main(int argc, char *argv[])
     for (int i = 1; i <= 6; ++i)
     {
         printf("Try %d\n", i);
-        if (recommend && (i > 1 || all_recommend))
+        if (recommend)
         {
             if (solves.size() == 1)
                 cout << "Solve: " << solves[0] << endl;
+            else if (i == 1)
+                puts("Recommend: raise");
             else if (hardmode || solves.size() > threshold)
                 get_recommend_hard();
             else
