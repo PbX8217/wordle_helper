@@ -1,4 +1,4 @@
-#define INNER
+// #define INNER
 
 #include <getopt.h>
 #include <cassert>
@@ -17,7 +17,7 @@ vector<string> all, solves;
 bool not_in[5][26] = {0};
 int exist[26] = {0};
 char correct[5] = {0};
-bool recommand = true;
+bool recommend = true;
 bool hardmode = false;
 bool verbose = false;
 int threshold = 46;
@@ -329,8 +329,8 @@ int main(int argc, char *argv[])
         switch (ch)
         {
         case 'r':
-            printf("Recommand Off\n");
-            recommand = false;
+            printf("Recommend Off\n");
+            recommend = true;
             break;
         case 'h':
             printf("Hard Mode On\n");
@@ -350,15 +350,15 @@ int main(int argc, char *argv[])
             break;
         }
     }
-    if(recommand)
-        printf("Recommand On\n");
+    if (recommend)
+        printf("Recommend On\n");
     string word;
     int status[5] = {0};
     read_all_words();
     for (int i = 1; i <= 6; ++i)
     {
         printf("Try %d\n", i);
-        if (recommand)
+        if (recommend)
         {
             if (solves.size() < threshold)
                 get_recommend(hardmode);
