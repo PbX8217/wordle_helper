@@ -41,6 +41,7 @@ void read_all_words()
 
 bool get_input(string &word, int status[5])
 {
+    printf("Please Input: ");
     cin >> word;
     for (char &ch : word)
         ch = tolower(ch);
