@@ -1,24 +1,23 @@
 #define INNER
 
-#include <iostream>
+#include <getopt.h>
 #include <cassert>
 #include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <cctype>
-#include <getopt.h>
-#include <vector>
-#include <string>
 #include <fstream>
+#include <iostream>
+#include <string>
+#include <vector>
 #include <unordered_set>
 using namespace std;
 
-vector<string> all;
-vector<string> solves;
+vector<string> all, solves;
 bool not_in[5][26] = {0};
 int exist[26] = {0};
 char correct[5] = {0};
-bool recommand = false;
+bool recommand = true;
 bool hardmode = false;
 bool verbose = false;
 int threshold = 46;
@@ -56,17 +55,8 @@ bool get_input(string &word, int status[5])
     return solved;
 }
 
-int get_all_solves(const string &word, int status[5], bool simulate = false)
+int get_all_solves(const string &word, const int status[5])
 {
-    bool not_in_bak[5][26] = {0};
-    int exist_bak[26] = {0};
-    char correct_bak[5] = {0};
-    if (simulate)
-    {
-        memcpy(not_in_bak, not_in, sizeof(not_in));
-        memcpy(exist_bak, exist, sizeof(exist));
-        memcpy(correct_bak, correct, sizeof(correct));
-    }
     int cnt[26] = {0};
     for (int i = 0; i < 5; ++i)
         switch (status[i])
@@ -120,15 +110,77 @@ int get_all_solves(const string &word, int status[5], bool simulate = false)
                 new_solves.emplace_back(str);
         }
     }
-    if (simulate)
-    {
-        memcpy(not_in, not_in_bak, sizeof(not_in));
-        memcpy(exist, exist_bak, sizeof(exist));
-        memcpy(correct, correct_bak, sizeof(correct));
-    }
-    else
-        solves = new_solves;
+    solves = new_solves;
     return new_solves.size();
+}
+
+int sim_all_solves(const string &word, const int status[5])
+{
+    bool not_in_bak[5][26] = {0};
+    int exist_bak[26] = {0};
+    char correct_bak[5] = {0};
+    memcpy(not_in_bak, not_in, sizeof(not_in));
+    int len = solves.size();
+    int cnt[26] = {0};
+    for (int i = 0; i < 5; ++i)
+    {
+        correct_bak[i] = correct[i];
+        switch (status[i])
+        {
+        case 2:
+            correct_bak[i] = word[i];
+            ++cnt[word[i] - 'a'];
+            break;
+        case 1:
+            not_in_bak[i][word[i] - 'a'] = true;
+            ++cnt[word[i] - 'a'];
+            break;
+        default:
+            for (int j = 0; j < 5; ++j)
+                if (correct_bak[j] != word[i])
+                    not_in_bak[j][word[i] - 'a'] = true;
+            break;
+        }
+    }
+    for (int i = 0; i < 26; ++i)
+    {
+        exist_bak[i] = exist[i];
+        if (cnt[i] > exist_bak[i])
+            exist_bak[i] = cnt[i];
+    }
+    int cnt_solves = 0;
+    for (int k = 0; k < len; ++k)
+    {
+        const string &str = solves[k];
+        bool flag = true;
+        int cnt_pos[26] = {0};
+        for (int i = 0; i < 5; ++i)
+        {
+            char ch = str[i];
+            if (correct_bak[i] && ch != correct_bak[i])
+            {
+                flag = false;
+                break;
+            }
+            else if (not_in_bak[i][ch - 'a'])
+            {
+                flag = false;
+                break;
+            }
+            ++cnt_pos[ch - 'a'];
+        }
+        if (flag)
+        {
+            for (int i = 0; i < 26; ++i)
+                if (cnt_pos[i] < exist_bak[i])
+                {
+                    flag = false;
+                    break;
+                }
+            cnt_solves += flag;
+        }
+    }
+    return cnt_solves;
 }
 
 void print_solves()
@@ -147,17 +199,16 @@ void get_recommend(bool hardmode = false)
         out.open("E:/test/vscode/wordle/wordle_solves_verbose.txt", ios::out | ios::trunc);
         assert(out.is_open());
     }
-    double max_info = 0;
-    int max_index = -1;
     if (hardmode)
     {
+        double max_info = 0;
+        int max_index = -1;
         int len = solves.size();
         printf("Search in Possible Solves\n");
         for (int i = 0; i < len; ++i)
         {
             const string &str = solves[i];
-            double E = 0;
-            int sim_status[5] = {0}, lock[5] = {0};
+            int lock[5] = {0};
             for (int j = 0; j < 5; ++j)
             {
                 if (correct[j] && str[j] == correct[j])
@@ -171,64 +222,10 @@ void get_recommend(bool hardmode = false)
                         lock[j] = 1;
                 }
             }
-            for (int s1 = lock[0]; s1 < 3; ++s1)
-            {
-                sim_status[0] = s1;
-                for (int s2 = lock[1]; s2 < 3; ++s2)
-                {
-                    sim_status[1] = s2;
-                    for (int s3 = lock[2]; s3 < 3; ++s3)
-                    {
-                        sim_status[2] = s3;
-                        for (int s4 = lock[3]; s4 < 3; ++s4)
-                        {
-                            sim_status[3] = s4;
-                            for (int s5 = lock[4]; s5 < 3; ++s5)
-                            {
-                                sim_status[4] = s5;
-                                int info = get_all_solves(str, sim_status, true);
-                                double p = info / (double)len;
-                                if (p > 0)
-                                    E += p * log2(1 / p);
-                            }
-                        }
-                    }
-                }
-            }
-            if (verbose)
-                out << str << " " << E << endl;
-            if (E > max_info)
-                max_info = E, max_index = i;
-        }
-    }
-    else
-    {
-        unordered_set<string> solves_set;
-        for (const string &str : solves)
-            solves_set.emplace(str);
-        int len = all.size(), tsize = solves.size();
-        printf("Search in All Words\n");
-        for (int i = 0; i < len; ++i)
-        {
-            const string &str = all[i];
             double E = 0;
-            int sim_status[5] = {0}, lock[5] = {0};
-            for (int j = 0; j < 5; ++j)
-            {
-                if (correct[j] && str[j] == correct[j])
-                    lock[j] = 2;
-                else if (exist[str[j] - 'a'])
-                {
-                    int cnt = 0;
-                    for (int k = 0; k <= j; ++k)
-                        cnt += (str[k] == str[j]);
-                    if (cnt <= exist[str[j] - 'a'])
-                        lock[j] = 1;
-                }
-            }
             for (int s1 = lock[0]; s1 < 3; ++s1)
             {
-                sim_status[0] = s1;
+                int sim_status[5] = {s1};
                 for (int s2 = lock[1]; s2 < 3; ++s2)
                 {
                     sim_status[1] = s2;
@@ -241,7 +238,7 @@ void get_recommend(bool hardmode = false)
                             for (int s5 = lock[4]; s5 < 3; ++s5)
                             {
                                 sim_status[4] = s5;
-                                int info = get_all_solves(str, sim_status, true);
+                                int info = sim_all_solves(str, sim_status);
                                 double p = info / (double)len;
                                 if (p > 0)
                                     E -= p * log2(p);
@@ -252,16 +249,75 @@ void get_recommend(bool hardmode = false)
             }
             if (verbose)
                 out << str << " " << E << endl;
+            if (E > max_info)
+                max_info = E, max_index = i;
+        }
+        if (max_index < 0)
+            max_index = 0;
+        cout << "Recommand: " << solves[max_index] << endl;
+    }
+    else
+    {
+        double max_info = 0;
+        int max_index = -1;
+        unordered_set<string> solves_set;
+        for (const string &str : solves)
+            solves_set.emplace(str);
+        int len = all.size(), tsize = solves.size();
+        printf("Search in All Words\n");
+        for (int i = 0; i < len; ++i)
+        {
+            const string &str = all[i];
+            int lock[5] = {0};
+            for (int j = 0; j < 5; ++j)
+            {
+                if (correct[j] && str[j] == correct[j])
+                    lock[j] = 2;
+                else if (exist[str[j] - 'a'])
+                {
+                    int cnt = 0;
+                    for (int k = 0; k <= j; ++k)
+                        cnt += (str[k] == str[j]);
+                    if (cnt <= exist[str[j] - 'a'])
+                        lock[j] = 1;
+                }
+            }
+            double E = 0;
+            for (int s1 = lock[0]; s1 < 3; ++s1)
+            {
+                int sim_status[5] = {s1};
+                for (int s2 = lock[1]; s2 < 3; ++s2)
+                {
+                    sim_status[1] = s2;
+                    for (int s3 = lock[2]; s3 < 3; ++s3)
+                    {
+                        sim_status[2] = s3;
+                        for (int s4 = lock[3]; s4 < 3; ++s4)
+                        {
+                            sim_status[3] = s4;
+                            for (int s5 = lock[4]; s5 < 3; ++s5)
+                            {
+                                sim_status[4] = s5;
+                                int info = sim_all_solves(str, sim_status);
+                                double p = info / (double)tsize;
+                                if (p > 0)
+                                    E -= p * log2(p);
+                            }
+                        }
+                    }
+                }
+            }
             if (solves_set.find(str) == solves_set.end())
                 E *= tanh(1 / log2(tsize));
+            else if (verbose)
+                out << str << " " << E << endl;
             if (E > max_info)
-                max_info = E,
-                max_index = i;
+                max_info = E, max_index = i;
         }
+        if (max_index < 0)
+            max_index = 0;
+        cout << "Recommand: " << all[max_index] << endl;
     }
-    if (max_index < 0)
-        max_index = 0;
-    cout << "Recommand: " << solves[max_index] << endl;
 }
 
 int main(int argc, char *argv[])
@@ -273,8 +329,8 @@ int main(int argc, char *argv[])
         switch (ch)
         {
         case 'r':
-            printf("Recommand On\n");
-            recommand = true;
+            printf("Recommand Off\n");
+            recommand = false;
             break;
         case 'h':
             printf("Hard Mode On\n");
@@ -294,6 +350,8 @@ int main(int argc, char *argv[])
             break;
         }
     }
+    if(recommand)
+        printf("Recommand On\n");
     string word;
     int status[5] = {0};
     read_all_words();
