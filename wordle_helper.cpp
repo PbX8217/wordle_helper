@@ -196,7 +196,7 @@ void get_recommend(bool hardmode = false)
     ofstream out;
     if (verbose)
     {
-        out.open("E:/test/vscode/wordle/wordle_solves_verbose.txt", ios::out | ios::trunc);
+        out.open("./wordle_solves_verbose.txt", ios::out | ios::trunc);
         assert(out.is_open());
     }
     if (hardmode)
