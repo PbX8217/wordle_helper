@@ -21,7 +21,6 @@ bool recommend = true;
 bool hardmode = false;
 bool verbose = false;
 int threshold = 46;
-
 string path_prefix = "./";
 
 void read_all_words()
@@ -204,7 +203,7 @@ void get_recommend()
     double max_info = 0;
     int max_index = -1;
     int len = all.size(), tsize = solves.size();
-    printf("Search in All Words\n");
+    puts("Search in All Words");
     for (int i = 0; i < len; ++i)
     {
         const string &str = all[i];
@@ -268,7 +267,7 @@ void get_recommend_hard()
     double max_info = 0;
     int max_index = -1;
     int len = solves.size();
-    printf("Search in Possible Solves\n");
+    puts("Search in Possible Solves");
     for (int i = 0; i < len; ++i)
     {
         const string &str = solves[i];
@@ -331,15 +330,15 @@ int main(int argc, char *argv[])
         switch (ch)
         {
         case 'r':
-            printf("Recommend Off\n");
+            puts("Recommend Off");
             recommend = false;
             break;
         case 'h':
-            printf("Hard Mode On\n");
+            puts("Hard Mode On");
             hardmode = true;
             break;
         case 'v':
-            printf("Verbose Print\n");
+            puts("Verbose Print");
             verbose = true;
             break;
         case 'n':
@@ -347,13 +346,15 @@ int main(int argc, char *argv[])
             printf("Set Recommend Threshold: %d\n", threshold);
             break;
         default:
-            printf("-h: Open Hard Mode\n");
-            printf("-v: Open Verbose Mode\n");
+            puts("-h: Open Hard Mode");
+            puts("-v: Open Verbose Mode");
+            puts("-r: Close Recommends");
+            puts("-n: Set Recommend Threshold");
             break;
         }
     }
     if (recommend)
-        printf("Recommend On\n");
+        puts("Recommend On");
     string word;
     int status[5] = {0};
     read_all_words();
@@ -373,14 +374,14 @@ int main(int argc, char *argv[])
         }
         if (get_input(word, status))
         {
-            printf("Congratulations!\n");
+            puts("Congratulations!");
             system("pause");
             return 0;
         }
         get_all_solves(word, status);
         print_solves();
     }
-    printf("Oops\n");
+    puts("Oops");
     system("pause");
     return 0;
 }
