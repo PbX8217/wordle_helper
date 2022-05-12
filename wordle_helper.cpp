@@ -334,7 +334,7 @@ int main(int argc, char *argv[])
         {
         case 'r':
             printf("Recommend Off\n");
-            recommend = true;
+            recommend = false;
             break;
         case 'h':
             printf("Hard Mode On\n");
