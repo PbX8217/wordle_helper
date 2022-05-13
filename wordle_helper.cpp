@@ -375,8 +375,12 @@ int main(int argc, char *argv[])
     string word;
     int status[5] = {0};
     read_all_words();
-    ofstream fout(path_prefix + "wordle_solves.txt");
-    assert(fout.is_open());
+    ofstream fout;
+    if (verbose)
+    {
+        fout.open(path_prefix + "wordle_solves.txt", ios::out | ios::trunc);
+        assert(fout.is_open());
+    }
     for (int i = 1; i <= 6; ++i)
     {
         printf("Try %d\n", i);
